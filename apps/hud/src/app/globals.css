@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --orb-glow: #38e1ff;
+}
+
+html,
+body {
+  background-color: #05070a;
+  color: #e5e7eb;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}

@@ -1,0 +1,17 @@
+[Unit]
+Description=Vision Mind - servico de voz (STT/TTS)
+After=network.target
+
+[Service]
+Type=simple
+User=vision
+WorkingDirectory=/srv/vision-mind/services/voice
+EnvironmentFile=-/srv/vision-mind/.env
+ExecStart=/srv/vision-mind/services/voice/.venv/bin/python run.py
+Restart=on-failure
+RestartSec=5
+# Um job de audio por vez (ver audio_lock em app/main.py); sem GPU na VPS.
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target

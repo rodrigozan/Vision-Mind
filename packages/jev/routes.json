@@ -1,0 +1,9 @@
+[
+  { "id": "skill", "tier": 1, "engine": null, "uso": "usuario chamou uma skill pelo nome" },
+  { "id": "quick-answer", "tier": 2, "engine": "openrouter", "uso": "resposta curta, conversa, fato rapido" },
+  { "id": "code-heavy", "tier": 3, "engine": "claude-code", "uso": "codigo complexo, refatoracao, arquitetura" },
+  { "id": "code-fast", "tier": 3, "engine": "codex", "uso": "ajuste pontual de codigo, script, bug simples" },
+  { "id": "code-cheap", "tier": 3, "engine": "qwen-code", "uso": "tarefa de codigo simples e barata, em lote" },
+  { "id": "research-agent", "tier": 3, "engine": "antigravity", "uso": "pesquisa e tarefas agenticas longas" },
+  { "id": "vault-write", "tier": 2, "engine": "openrouter", "uso": "registrar nota, tarefa ou ideia no cofre" }
+]

@@ -1,0 +1,22 @@
+{
+  "name": "vision-mind",
+  "private": true,
+  "packageManager": "yarn@4.18.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "yarn workspaces foreach -At run build",
+    "test": "yarn workspaces foreach -At run test",
+    "engines:smoke": "yarn workspace @vision-mind/engines run smoke",
+    "jev:test": "yarn workspace @vision-mind/jev run test",
+    "api:dev": "yarn workspace @vision-mind/api run dev",
+    "worker:dev": "yarn workspace @vision-mind/worker run dev",
+    "hud:dev": "yarn workspace @vision-mind/hud run dev",
+    "doctor": "node ./scripts/doctor.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

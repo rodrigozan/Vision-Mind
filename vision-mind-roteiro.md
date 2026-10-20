@@ -55,14 +55,38 @@ vision-mind/
   .env.example
 ```
 
+O cofre **nao** e uma pasta nova: e o vault real do Rod, em
+`/root/obsidian/brainiac` (repositorio Git proprio, remoto
+`github.com/rodrigozan/obsidian`). Ele tem sua propria constituicao em
+`.claude/CLAUDE.md`, que **proibe explicitamente** inbox, diario e pastas de
+fila ("tudo que eu falo vira registro no lugar certo, na hora"). O Vision
+Mind escreve dentro dessa estrutura ja existente, nunca por cima dela:
+
 ```
-vault/
-  inbox/
-  projetos/
-  conteudo/
-  wiki/
-  diario/
+brainiac/
+  tasks/            # todo.md (fonte unica de tarefas), lessons.md
+  memoria/          # MEMORY.md, foco-da-semana.md, perfil.md
+  conhecimento/     # raw/ (material bruto) e wiki/ (compilado, interligado)
+  negocio/          # produtos/ e conteudo/ (output do content-cascade p/ PhanterAI)
+  clientes/         # <slug>/overview.md, e <slug>/conteudo/ quando for conteudo de cliente
+  projetos/         # so o indice: <slug>.md por projeto de codigo
+  pessoal/, pessoas/, reunioes/, arquivo/, assets/
+  .claude/          # constituicao do vault, skill /save, hooks
+  .vision-mind/     # pasta tecnica do proprio Vision Mind (ex.: _jev-log.md)
 ```
+
+**Nao criar `inbox/`, `diario/` ou `wiki/` na raiz** - isso contraria a
+constituicao do vault. Mapeamento das skills (Fase 6) pra essa estrutura
+real:
+
+| Skill | Le | Escreve em |
+|---|---|---|
+| `plan-today` | `memoria/foco-da-semana.md`, `tasks/todo.md` | `memoria/foco-da-semana.md` (so as segundas; nos outros dias so responde, sem gravar) |
+| `inbox-brief` | `memoria/foco-da-semana.md`, `tasks/todo.md` | nada (so resposta falada/HUD) |
+| `content-cascade` | pedido do usuario | `negocio/conteudo/` ou `clientes/<slug>/conteudo/` (a skill decide e declara) |
+| `deep-research` | pedido do usuario | `projetos/<slug>.md` (indice; cita `/root/phanterai_creative_agency/<slug>/` quando for codigo) |
+| `harvest` | `conhecimento/raw/` | `conhecimento/wiki/` |
+| `weekly-review` | `memoria/foco-da-semana.md`, `tasks/todo.md` | `conhecimento/wiki/` |
 
 ---
 
@@ -70,7 +94,7 @@ vault/
 
 Tarefas:
 
-1. Atualizar o sistema e criar o usuário `vision` sem acesso root via SSH.
+1. Atualizar o sistema. **Decisão (Rod):** rodar tudo como `root`, sem criar usuário `vision` separado. O motivo original (o `claude-code` recusa bypass total de permissões como root) foi resolvido usando `--permission-mode acceptEdits` em vez de `bypassPermissions`/`--dangerously-skip-permissions` (ver `docs/engines.md`) - funciona como root, sem abrir mão da proteção contra bypass total.
 2. Configurar o UFW liberando apenas as portas 22, 80 e 443.
 3. Criar 4 GB de swap.
 4. Instalar Node 22 (via nvm), Yarn, Git, Python 3.12, Redis, Caddy, ffmpeg e PM2.
@@ -103,9 +127,10 @@ Tarefas:
 2. Criar o pacote `packages/vault` com:
    - `writeNote(pasta, titulo, conteudo, frontmatter)`.
    - `readNote(caminho)`.
-   - `dailyNote(data)`, que cria ou retorna `diario/AAAA-MM-DD.md` com as seções Plano, Agenda e 3 Prioridades.
+   - `readFocoDaSemana()` / `writeFocoDaSemana(conteudo)`, que leem/sobrescrevem `memoria/foco-da-semana.md` (arquivo fixo, já existente no vault real; nunca criado sob demanda).
+   - `readTodo()`, que lê `tasks/todo.md` (fonte única de tarefas; somente leitura).
    - `commitAndPush(mensagem)`, que faz git add, commit e push.
-3. Inicializar o repositório Git do cofre com remoto privado.
+3. O cofre já existe (`/root/obsidian/brainiac`, repositório Git próprio com remoto). Não inicializar um repositório novo.
 4. Documentar em `docs/obsidian.md` como sincronizar o cofre no PC com o plugin Obsidian Git (pull a cada 5 min).
 
 Dependências de `packages/vault`:
@@ -202,7 +227,7 @@ Tarefas:
 4. Override manual: prefixos `@claude`, `@codex`, `@qwen`, `@antigravity` e `@router` forçam o motor.
 5. Fallback: se o motor escolhido estiver indisponível, usar o fallback configurado na Fase 2.
 6. Modo sem Jev: variável `JEV_ENABLED=false` faz o roteamento usar regras simples por palavras-chave.
-7. Log de cada decisão em `vault/inbox/_jev-log.md` com pedido resumido, rota, motor e tempo.
+7. Log de cada decisão em `.vision-mind/_jev-log.md` (pasta técnica do próprio Vision Mind, fora da taxonomia de conteúdo do vault) com pedido resumido, rota, motor e tempo.
 
 Variáveis de ambiente:
 
@@ -246,7 +271,7 @@ Endpoints:
 | GET | `/events` | SSE com estados: idle, listening, working, speaking, error |
 | GET | `/skills` | lista as skills disponíveis |
 | POST | `/skills/:name/run` | executa uma skill |
-| GET | `/vault/today` | nota do dia |
+| GET | `/vault/today` | foco da semana atual (`memoria/foco-da-semana.md`) |
 | GET | `/engines/status` | disponibilidade de cada motor |
 
 Regras:
@@ -297,21 +322,23 @@ name: plan-today
 title: Plan Today
 engine: claude-code
 fallback: openrouter
-output: diario
+output: foco-semana
 button: true
 ---
 ```
 
+`output` indica como o worker trata o resultado: nome de pasta real do vault (grava nota nova ali, ex. `conhecimento/wiki`), `foco-semana` (reescreve `memoria/foco-da-semana.md`, só as segundas-feiras), `conteudo` (a skill declara a pasta final na primeira linha da resposta, `DESTINO: <pasta>`), ou `none` (nada é gravado, é só resposta falada/HUD).
+
 Tarefas:
 
 1. O worker consome a fila com concorrência 1 para motores CLI e concorrência 3 para OpenRouter.
-2. Executar a skill montando o prompt a partir do `SKILL.md` e do contexto do cofre (nota do dia e notas relevantes).
-3. Salvar o resultado como markdown na pasta indicada em `output` e chamar `commitAndPush`.
+2. Executar a skill montando o prompt a partir do `SKILL.md` e do contexto do cofre (foco da semana em `memoria/foco-da-semana.md` e tarefas pendentes em `tasks/todo.md` - o vault real não tem "nota do dia").
+3. Salvar o resultado conforme o `output` da skill (ver tabela acima) e chamar `commitAndPush`.
 4. Emitir eventos de estado via Redis pub/sub para o SSE da API.
-5. Skill `harvest`: transforma um projeto concluído em `projetos/` em artigo dentro de `wiki/`.
+5. Skill `harvest`: transforma material bruto de `conhecimento/raw/` em artigo dentro de `conhecimento/wiki/`.
 6. Agendar `plan-today` (dias úteis, 7h) e `weekly-review` (sexta, 17h) com jobs repetíveis do BullMQ, no fuso America/Sao_Paulo.
 
-Aceite: o botão "Plan Today" gera `diario/AAAA-MM-DD.md` preenchido e ele aparece no Obsidian local.
+Aceite: o botão "Plan Today", numa segunda-feira, reescreve `memoria/foco-da-semana.md` e a mudança aparece no Obsidian local; nos demais dias, só devolve o foco atual sem gravar nada.
 
 ---
 
@@ -322,7 +349,7 @@ Telas:
 1. **HUD principal**: orbe central animada com os estados (idle, listening, working, speaking, error), relógio e botão "Tap to talk".
 2. **Painel de skills**: grade de botões vinda de `/skills` com `button: true`.
 3. **Motores**: status de cada motor e a última decisão do Jev.
-4. **Hoje**: nota do dia, agenda e 3 prioridades.
+4. **Hoje**: foco da semana vigente (`memoria/foco-da-semana.md`) e tarefas pendentes de `tasks/todo.md`.
 5. **Jobs**: lista de execuções com motor, duração e link para a nota gerada.
 6. **Customize dashboard**: escolher quais skills aparecem como botão.
 

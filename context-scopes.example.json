@@ -1,0 +1,14 @@
+{
+  "scopes": [
+    {
+      "id": "client:acessibilidade-certa",
+      "kind": "client",
+      "files": ["clientes/acessibilidade-certa/overview.md"]
+    },
+    {
+      "id": "client:igreja-principios-de-vida",
+      "kind": "client",
+      "files": ["clientes/igreja-principios-de-vida/overview.md"]
+    }
+  ]
+}

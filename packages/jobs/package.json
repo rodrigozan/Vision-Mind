@@ -1,0 +1,22 @@
+{
+  "name": "@vision-mind/jobs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vision-mind/engines": "workspace:^",
+    "@vision-mind/jev": "workspace:^",
+    "ioredis": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

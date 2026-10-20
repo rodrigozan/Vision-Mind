@@ -1,0 +1,35 @@
+{
+  "claude-code": {
+    "command": "claude",
+    "args": ["-p", "{prompt}", "--output-format", "json", "--permission-mode", "acceptEdits"],
+    "versionArgs": ["--version"],
+    "fallback": ["codex"],
+    "timeoutMs": 120000
+  },
+  "codex": {
+    "command": "codex",
+    "args": ["exec", "{prompt}"],
+    "versionArgs": ["--version"],
+    "fallback": ["claude-code"],
+    "timeoutMs": 120000
+  },
+  "qwen-code": {
+    "command": "qwen",
+    "args": ["-p", "{prompt}", "--output-format", "text"],
+    "versionArgs": ["--version"],
+    "fallback": ["openrouter"],
+    "timeoutMs": 90000
+  },
+  "antigravity": {
+    "command": "agy",
+    "args": ["-p", "{prompt}", "--mode", "accept-edits", "--output-format", "text"],
+    "versionArgs": ["--version"],
+    "fallback": ["qwen-code", "openrouter"],
+    "timeoutMs": 45000
+  },
+  "openrouter": {
+    "model": "openrouter/auto",
+    "fallback": [],
+    "timeoutMs": 30000
+  }
+}
